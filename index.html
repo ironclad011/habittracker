@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Habit Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f5f5f0;
+    --surface: #ffffff;
+    --surface2: #f0ede8;
+    --text: #1a1a18;
+    --text2: #6b6b67;
+    --text3: #a0a09c;
+    --border: rgba(0,0,0,0.1);
+    --border2: rgba(0,0,0,0.18);
+    --green: #1D9E75;
+    --green-light: #E1F5EE;
+    --green-dark: #085041;
+    --green-muted: #9FE1CB;
+    --amber: #BA7517;
+    --amber-light: #FAEEDA;
+    --radius: 10px;
+    --radius-lg: 14px;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a18;
+      --surface: #242422;
+      --surface2: #2e2e2b;
+      --text: #f0ede8;
+      --text2: #a0a09c;
+      --text3: #6b6b67;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.18);
+      --green-light: #04342C;
+      --green-muted: #085041;
+      --amber-light: #412402;
+      --amber: #FAC775;
+    }
+  }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem 4rem;
+  }
+
+  .container { width: 100%; max-width: 560px; }
+
+  /* Header */
+  .app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+  .app-title { font-size: 26px; font-weight: 600; letter-spacing: -0.5px; }
+  .app-date { font-size: 13px; color: var(--text2); }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .stat {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+  }
+  .stat-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 6px; }
+  .stat-val { font-size: 24px; font-weight: 600; }
+
+  /* Progress bar */
+  .progress-wrap { margin-bottom: 1.75rem; }
+  .progress-label { display: flex; justify-content: space-between; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .progress-track {
+    height: 7px; background: var(--surface2);
+    border-radius: 99px; overflow: hidden;
+  }
+  .progress-bar {
+    height: 100%; background: var(--green);
+    border-radius: 99px; transition: width 0.35s ease;
+  }
+
+  /* Section */
+  .section-label {
+    font-size: 11px; font-weight: 500; color: var(--text2);
+    text-transform: uppercase; letter-spacing: 0.07em;
+    margin-bottom: 10px;
+  }
+
+  /* Habit rows */
+  .habit-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .habit-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    user-select: none;
+  }
+  .habit-row:hover { background: var(--surface2); }
+  .habit-row.done { border-color: var(--green); }
+
+  .check-circle {
+    width: 24px; height: 24px; flex-shrink: 0;
+    border-radius: 50%;
+    border: 1.5px solid var(--border2);
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+    font-size: 13px; color: #fff;
+  }
+  .habit-row.done .check-circle { background: var(--green); border-color: var(--green); }
+
+  .habit-info { flex: 1; min-width: 0; }
+  .habit-name { font-size: 15px; font-weight: 500; transition: color 0.15s; }
+  .habit-row.done .habit-name { color: var(--text3); text-decoration: line-through; }
+  .habit-sub { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+  .streak-badge {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 12px; font-weight: 500;
+    color: var(--amber); background: var(--amber-light);
+    border-radius: 20px; padding: 4px 10px; flex-shrink: 0;
+  }
+
+  .del-btn {
+    opacity: 0; transition: opacity 0.15s;
+    background: none; border: none; cursor: pointer;
+    color: var(--text3); padding: 4px; display: flex;
+    align-items: center; border-radius: 6px;
+    font-size: 16px;
+  }
+  .habit-row:hover .del-btn { opacity: 1; }
+  .del-btn:hover { color: #E24B4A; }
+
+  /* Empty state */
+  .empty {
+    text-align: center; padding: 2.5rem 1rem;
+    color: var(--text3); font-size: 14px;
+    border: 0.5px dashed var(--border2);
+    border-radius: var(--radius-lg);
+  }
+  .empty i { font-size: 32px; display: block; margin-bottom: 8px; }
+
+  /* Add row */
+  .add-row { display: flex; gap: 8px; margin-top: 4px; }
+  .add-row input {
+    flex: 1; padding: 10px 14px; font-size: 14px;
+    border-radius: var(--radius);
+    border: 0.5px solid var(--border2);
+    background: var(--surface);
+    color: var(--text);
+    font-family: inherit;
+    outline: none;
+    transition: box-shadow 0.15s;
+  }
+  .add-row input::placeholder { color: var(--text3); }
+  .add-row input:focus { box-shadow: 0 0 0 3px rgba(29,158,117,0.25); border-color: var(--green); }
+
+  .btn {
+    padding: 10px 18px; font-size: 14px; font-weight: 500;
+    border-radius: var(--radius); border: 0.5px solid var(--border2);
+    background: transparent; color: var(--text);
+    cursor: pointer; display: flex; align-items: center; gap: 6px;
+    font-family: inherit; white-space: nowrap;
+    transition: background 0.15s;
+  }
+  .btn:hover { background: var(--surface2); }
+  .btn.primary {
+    background: var(--green-dark); color: var(--green-muted);
+    border-color: var(--green-dark);
+  }
+  .btn.primary:hover { background: var(--green); color: #fff; }
+
+  /* Reset button */
+  .footer { margin-top: 2.5rem; text-align: center; }
+  .reset-btn {
+    font-size: 12px; color: var(--text3); background: none;
+    border: none; cursor: pointer; font-family: inherit;
+    text-decoration: underline; text-underline-offset: 3px;
+  }
+  .reset-btn:hover { color: #E24B4A; }
+
+  @media (max-width: 480px) {
+    .stats { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .stat { padding: 12px; }
+    .stat-val { font-size: 20px; }
+    .app-title { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="app-header">
+    <h1 class="app-title">Habit Tracker</h1>
+    <span class="app-date" id="app-date"></span>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Done today</div>
+      <div class="stat-val" id="stat-done">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Total</div>
+      <div class="stat-val" id="stat-total">0</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Best streak</div>
+      <div class="stat-val" id="stat-best">0</div>
+    </div>
+  </div>
+
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>Today's progress</span>
+      <span id="prog-pct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-bar" id="prog-bar" style="width:0%"></div>
+    </div>
+  </div>
+
+  <div class="section-label">Habits</div>
+  <div class="habit-list" id="habit-list"></div>
+  <div class="empty" id="empty-state" style="display:none">
+    <i class="ti ti-plant-2" aria-hidden="true"></i>
+    No habits yet — add your first one below
+  </div>
+
+  <div class="add-row">
+    <input type="text" id="new-input" placeholder="Add a new habit…" maxlength="60" autocomplete="off" />
+    <button class="btn primary" onclick="addHabit()">
+      <i class="ti ti-plus" aria-hidden="true"></i> Add
+    </button>
+  </div>
+
+  <div class="footer">
+    <button class="reset-btn" onclick="resetToday()">Reset today's check-ins</button>
+  </div>
+</div>
+
+<script>
+  const KEY = 'habittracker_v1';
+
+  function today() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function load() {
+    try { return JSON.parse(localStorage.getItem(KEY)) || { habits: [], history: {} }; }
+    catch { return { habits: [], history: {} }; }
+  }
+
+  function save(data) {
+    localStorage.setItem(KEY, JSON.stringify(data));
+  }
+
+  function calcStreak(history, id) {
+    let streak = 0;
+    let d = new Date();
+    while (true) {
+      const k = d.toISOString().slice(0, 10);
+      if (history[k] && history[k][id]) {
+        streak++;
+        d.setDate(d.getDate() - 1);
+      } else break;
+    }
+    return streak;
+  }
+
+  function bestStreak(data) {
+    if (!data.habits.length) return 0;
+    return Math.max(...data.habits.map(h => calcStreak(data.history, h.id)));
+  }
+
+  function render() {
+    const data = load();
+    const t = today();
+    if (!data.history[t]) data.history[t] = {};
+
+    const list = document.getElementById('habit-list');
+    const emptyEl = document.getElementById('empty-state');
+    list.innerHTML = '';
+
+    const total = data.habits.length;
+    const done = data.habits.filter(h => data.history[t][h.id]).length;
+    const pct = total ? Math.round((done / total) * 100) : 0;
+
+    document.getElementById('stat-done').textContent = done;
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-best').textContent = bestStreak(data) + ' 🔥';
+    document.getElementById('prog-bar').style.width = pct + '%';
+    document.getElementById('prog-pct').textContent = pct + '%';
+    document.getElementById('app-date').textContent = new Date().toLocaleDateString(undefined, {
+      weekday: 'long', month: 'long', day: 'numeric'
+    });
+
+    if (!total) { emptyEl.style.display = ''; return; }
+    emptyEl.style.display = 'none';
+
+    data.habits.forEach(h => {
+      const isDone = !!data.history[t][h.id];
+      const streak = calcStreak(data.history, h.id);
+
+      const row = document.createElement('div');
+      row.className = 'habit-row' + (isDone ? ' done' : '');
+
+      row.innerHTML = `
+        <div class="check-circle">
+          ${isDone ? '<i class="ti ti-check" aria-hidden="true"></i>' : ''}
+        </div>
+        <div class="habit-info">
+          <div class="habit-name">${escHtml(h.name)}</div>
+          <div class="habit-sub">Added ${h.added}</div>
+        </div>
+        ${streak > 0 ? `<span class="streak-badge"><i class="ti ti-flame" aria-hidden="true"></i>${streak}d</span>` : ''}
+        <button class="del-btn" title="Delete habit" data-id="${h.id}">
+          <i class="ti ti-trash" aria-hidden="true"></i>
+        </button>
+      `;
+
+      row.addEventListener('click', e => {
+        if (e.target.closest('.del-btn')) return;
+        toggle(h.id);
+      });
+
+      row.querySelector('.del-btn').addEventListener('click', e => {
+        e.stopPropagation();
+        if (confirm(`Delete "${h.name}"?`)) deleteHabit(h.id);
+      });
+
+      list.appendChild(row);
+    });
+  }
+
+  function toggle(id) {
+    const data = load();
+    const t = today();
+    if (!data.history[t]) data.history[t] = {};
+    data.history[t][id] = !data.history[t][id];
+    save(data);
+    render();
+  }
+
+  function addHabit() {
+    const inp = document.getElementById('new-input');
+    const name = inp.value.trim();
+    if (!name) { inp.focus(); return; }
+    const data = load();
+    data.habits.push({
+      id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+      name,
+      added: new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })
+    });
+    save(data);
+    inp.value = '';
+    inp.focus();
+    render();
+  }
+
+  function deleteHabit(id) {
+    const data = load();
+    data.habits = data.habits.filter(h => h.id !== id);
+    save(data);
+    render();
+  }
+
+  function resetToday() {
+    if (!confirm('Clear all check-ins for today? Streaks will be affected.')) return;
+    const data = load();
+    data.history[today()] = {};
+    save(data);
+    render();
+  }
+
+  function escHtml(s) {
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  document.getElementById('new-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter') addHabit();
+  });
+
+  render();
+</script>
+</body>
+</html>
