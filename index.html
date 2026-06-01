@@ -250,7 +250,7 @@
 
   <div class="footer">
     <button class="reset-btn" onclick="resetToday()">Reset today's check-ins</button>
-  
+  </div>
 </div>
 
 <script>
@@ -259,6 +259,8 @@
   function today() {
     return new Date().toISOString().slice(0, 10);
   }
+  
+  function calculate(){
 
   function load() {
     try { return JSON.parse(localStorage.getItem(KEY)) || { habits: [], history: {} }; }
